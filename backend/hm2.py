@@ -33,19 +33,22 @@ def predict(text: str) -> dict:
     )
     with torch.no_grad():
         outputs = model(**inputs)
-    
+
     pred = torch.argmax(outputs.logits, dim=1).item()
     confidence = torch.softmax(outputs.logits, dim=1).max().item()
-    
+
     if pred == 1:
+        # Pick corrective message — default for now, category detection coming
         return {
             "label": "HARMFUL",
+            "category": "default",
             "confidence": round(confidence * 100, 2),
             "message": CORRECTIVE_MESSAGES.get("default")
         }
     else:
         return {
-            "label": "NO HARMFUL ACTIVITY DETECTED",
+            "label": "SAFE",
+            "category": "safe",
             "confidence": round(confidence * 100, 2),
             "message": None
         }

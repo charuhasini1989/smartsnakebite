@@ -26,3 +26,9 @@ export const fullPipeline = async (audioBlob, lat, lng) => {
   )
   return res.data
 }
+
+export const getHospitalsList = async (lat, lng) => {
+  const query = (lat != null && lng != null) ? `?lat=${lat}&lng=${lng}` : ''
+  const res = await axios.get(`/api/hospitals/list${query}`)
+  return res.data
+}

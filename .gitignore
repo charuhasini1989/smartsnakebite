@@ -1,6 +1,19 @@
+# Model weights & caches
 backend/snake3_model/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Node & Build artifacts
 node_modules/
 dist/
+build/
 .env
+.env.local
+
+# Database & OS files
+backend/cases.db
+*.db
+*.log
+.DS_Store
