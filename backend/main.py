@@ -148,6 +148,11 @@ def send_hospital_response(case_id: int, req: HospitalResponseReq):
     )
     return entry
 
+@app.post("/api/cases/{case_id}/resolve")
+def resolve_case_endpoint(case_id: int):
+    resolve_case(case_id)
+    return {"resolved": True, "case_id": case_id}
+
 @app.get("/api/cases/{case_id}")
 def get_single_case(case_id: int):
     cases = get_all_cases()
