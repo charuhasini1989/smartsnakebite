@@ -134,15 +134,27 @@ async def case_followup(case_id: int, file: UploadFile = File(...)):
     )
     return entry
 
-@app.post("/api/cases/{case_id}/close")
-def case_close(case_id: int):
-    close_case(case_id)
-    return {"closed": True}
+class HospitalResponseReq(BaseModel):
+    message: str
+    hospital_name: str = None
 
-@app.post("/api/cases/{case_id}/resolve")
-def case_resolve(case_id: int):
-    resolve_case(case_id)
-    return {"resolved": True}
+@app.post("/api/cases/{case_id}/hospital-response")
+def send_hospital_response(case_id: int, req: HospitalResponseReq):
+    entry = add_followup(
+        case_id,
+        f"🏥 Staff Update ({req.hospital_name or 'Emergency Desk'}): {req.message}",
+        language="en",
+        sender="hospital"
+    )
+    return entry
+
+@app.get("/api/cases/{case_id}")
+def get_single_case(case_id: int):
+    cases = get_all_cases()
+    c = next((item for item in cases if item["id"] == case_id), None)
+    if not c:
+        return {"error": "case not found"}
+    return {"case": c}
 
 def _get_hospital_cases_with_fallback(hospital_name: str):
     cases = get_cases_for_hospital(hospital_name)

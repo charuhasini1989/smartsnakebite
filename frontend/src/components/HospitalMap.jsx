@@ -136,13 +136,19 @@ export default function HospitalMap({ hospitals, userLocation, caseId }) {
           </div>
         </div>
 
-        {/* Direct Call Button */}
-        <div className="ah-call-section">
+        {/* Direct Call & Text Actions */}
+        <div className="ah-call-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <a
             href={`tel:${assignedHospital.phone ? assignedHospital.phone.replace(/[^0-9]/g, '') : '108'}`}
             className="call-hospital-now-btn"
           >
-            📞 Call {assignedHospital.name} Immediately ({assignedHospital.phone || '108'})
+            📞 Call Hospital ({assignedHospital.phone || '108'})
+          </a>
+          <a
+            href={`sms:${assignedHospital.phone ? assignedHospital.phone.replace(/[^0-9]/g, '') : '108'}?body=${encodeURIComponent(`EMERGENCY: Snakebite reported. Requesting intake preparation at ${assignedHospital.name}.`)}`}
+            className="call-hospital-now-btn text-sms-btn"
+          >
+            💬 Text SMS Hospital
           </a>
         </div>
       </div>

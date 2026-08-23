@@ -7,6 +7,7 @@ import ResultCard from './components/ResultCard'
 import HospitalMap from './components/HospitalMap'
 import AnnouncementTicker from './components/AnnouncementTicker'
 import { fullPipeline } from './api'
+import { speakText, generateEmergencySpeechText } from './speech'
 import './App.css'
 
 const FOLLOWUP_PROMPT = {
@@ -16,61 +17,58 @@ const FOLLOWUP_PROMPT = {
 }
 
 const speakResponse = (data) => {
-  if (!('speechSynthesis' in window)) return
-  window.speechSynthesis.cancel()
-
   const lang = data.transcription?.language || 'en'
-  const isHarmful = data.prediction?.label === 'HARMFUL'
-  const topHospital = data.hospitals?.[0]
-
-  let text = ''
-  if (isHarmful) {
-    if (lang === 'hi') {
-      text = `चेतावनी! हानिकारक प्रथा पाई गई है। कृपया इसे तुरंत हटाएं और अस्पताल जाएं। `
-      if (topHospital) text += `${topHospital.name} से एक एम्बुलेंस रवाना हो चुकी है। `
-      text += `कृपया मरीज का नाम और लोकेशन बताएं।`
-    } else if (lang === 'te') {
-      text = `హెచ్చరిక! ప్రమాదకరమైన పద్ధతి గమనించబడింది. దయచేసి వెంటనే దీనిని తొలగించి ఆసుపత్రికి వెళ్ళండి. `
-      if (topHospital) text += `${topHospital.name} నుండి అంబులెన్స్ బయలుదేరింది. `
-      text += `దయచేసి రోగి పేరు మరియు స్థలం చెప్పండి.`
-    } else {
-      text = `Warning! A harmful practice has been detected. Stop immediately and proceed to the hospital. `
-      if (topHospital) text += `An ambulance has been dispatched from ${topHospital.name}. `
-      text += `Please tell us the patient's name and current location.`
-    }
-  } else {
-    if (lang === 'hi') {
-      text = `कोई हानिकारक प्रथा नहीं मिली। सावधानी के लिए अस्पताल जाएं। कृपया मरीज का नाम और लोकेशन बताएं।`
-    } else if (lang === 'te') {
-      text = `హానికరమైన పద్ధతి ఏదీ లేదు. దయచేసి ఆసుపత్రికి వెళ్ళండి. దయచేసి రోగి పేరు మరియు స్థలం చెప్పండి.`
-    } else {
-      text = `No harmful practice detected. Please proceed to the nearest hospital. Please state the patient's name and location.`
-    }
-  }
-
-  const utterance = new SpeechSynthesisUtterance(text)
-  if (lang === 'te') utterance.lang = 'te-IN'
-  else if (lang === 'hi') utterance.lang = 'hi-IN'
-  else utterance.lang = 'en-US'
-
-  utterance.rate = 0.95
-  window.speechSynthesis.speak(utterance)
+  const speechText = generateEmergencySpeechText(data)
+  speakText(speechText, lang)
 }
 
 export default function App() {
   useTitle('Report a Snakebite — Voice Emergency First-Aid')
-  const [result, setResult] = useState(null)
+
+  // Persist session state across page navigation until explicitly ended
+  const [result, setResult] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('smartsnakebite_result')
+      return saved ? JSON.parse(saved) : null
+    } catch { return null }
+  })
+  const [caseId, setCaseId] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('smartsnakebite_caseId')
+      return saved ? JSON.parse(saved) : null
+    } catch { return null }
+  })
+  const [conversation, setConversation] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('smartsnakebite_conversation')
+      return saved ? JSON.parse(saved) : []
+    } catch { return [] }
+  })
+
   const [error, setError] = useState(null)
   const [userLocation, setUserLocation] = useState(null)
   const [loading, setLoading] = useState(false)
-
-  // Conversation mode: stays open after the first result until the
-  // user explicitly ends the session.
-  const [caseId, setCaseId] = useState(null)
-  const [conversation, setConversation] = useState([])
   const [sendingFollowup, setSendingFollowup] = useState(false)
   const [closing, setClosing] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (result) sessionStorage.setItem('smartsnakebite_result', JSON.stringify(result))
+    else sessionStorage.removeItem('smartsnakebite_result')
+  }, [result])
+
+  useEffect(() => {
+    if (caseId) sessionStorage.setItem('smartsnakebite_caseId', JSON.stringify(caseId))
+    else sessionStorage.removeItem('smartsnakebite_caseId')
+  }, [caseId])
+
+  useEffect(() => {
+    if (conversation && conversation.length > 0) {
+      sessionStorage.setItem('smartsnakebite_conversation', JSON.stringify(conversation))
+    } else {
+      sessionStorage.removeItem('smartsnakebite_conversation')
+    }
+  }, [conversation])
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -81,6 +79,26 @@ export default function App() {
       () => setUserLocation({ lat: 17.7231, lng: 83.3012 })
     )
   }, [])
+
+  // Poll for hospital responses in real-time when a case is active
+  useEffect(() => {
+    if (!caseId) return
+
+    const pollUpdates = async () => {
+      try {
+        const res = await axios.get(`/api/cases/${caseId}`)
+        if (res.data?.case?.followups) {
+          setConversation(res.data.case.followups)
+        }
+      } catch (err) {
+        console.error('Failed to poll case updates:', err)
+      }
+    }
+
+    pollUpdates()
+    const interval = setInterval(pollUpdates, 3000)
+    return () => clearInterval(interval)
+  }, [caseId])
 
   const handleAudio = async (audioBlob) => {
     setError(null)
@@ -119,18 +137,22 @@ export default function App() {
   }
 
   const handleEndSession = async () => {
-    if (!caseId) return
-    setClosing(true)
-    try {
-      await axios.post(`/api/cases/${caseId}/close`)
-    } catch (err) {
-      console.error('Failed to close case:', err)
-    } finally {
-      setClosing(false)
-      setResult(null)
-      setCaseId(null)
-      setConversation([])
+    if (caseId) {
+      setClosing(true)
+      try {
+        await axios.post(`/api/cases/${caseId}/close`)
+      } catch (err) {
+        console.error('Failed to close case:', err)
+      } finally {
+        setClosing(false)
+      }
     }
+    sessionStorage.removeItem('smartsnakebite_result')
+    sessionStorage.removeItem('smartsnakebite_caseId')
+    sessionStorage.removeItem('smartsnakebite_conversation')
+    setResult(null)
+    setCaseId(null)
+    setConversation([])
   }
 
   const inConversation = !!caseId
@@ -164,10 +186,9 @@ export default function App() {
           ) : (
             <>
               <div className="voice-section-text">
-                <span className="conversation-tag">● SESSION OPEN</span>
+                <span className="conversation-tag">● ACTIVE REPORT SESSION</span>
                 <h2 style={{ marginTop: 10 }}>{FOLLOWUP_PROMPT[promptLang]}</h2>
-                <p>Keep recording to add more details — name, location, anything useful
-                   for the hospital. Tap End Session when you're done.</p>
+                <p>Keep recording to add details. Hospital staff updates will appear below automatically. Tap End Session when finished.</p>
               </div>
               <VoiceRecorder onResult={handleFollowup} disabled={sendingFollowup} />
               <button
@@ -175,37 +196,47 @@ export default function App() {
                 onClick={handleEndSession}
                 disabled={closing}
               >
-                {closing ? 'Ending…' : '⏹ End Session'}
+                {closing ? 'Ending…' : 'End Session'}
               </button>
             </>
           )}
         </section>
 
-        {error && <div className="error-box">⚠️ {error}</div>}
+        {error && <div className="error-banner">{error}</div>}
 
         {result && (
-          <div className="results-section">
+          <>
             <ResultCard result={result} />
-            <HospitalMap
-              hospitals={result.hospitals}
-              userLocation={userLocation}
-              caseId={caseId || result.case_id}
-            />
 
-            {inConversation && conversation.length > 0 && (
+            {/* ── Two-Way Hospital & Patient Conversation Feed ── */}
+            {conversation.length > 0 && (
               <section className="conversation-section">
-                <span className="conversation-tag">Conversation so far</span>
+                <h3>💬 Live Emergency Communications (Hospital & Patient)</h3>
                 <div className="conversation-log">
-                  {conversation.map((entry, i) => (
-                    <div key={i} className="conversation-entry">
-                      <span className="conversation-entry-lang">{entry.language?.toUpperCase()}</span>
-                      <p>"{entry.transcript}"</p>
+                  {conversation.map((entry, idx) => (
+                    <div
+                      key={idx}
+                      className={`conversation-entry ${entry.sender === 'hospital' ? 'from-hospital-bubble' : 'from-patient-bubble'}`}
+                    >
+                      <div className="entry-meta">
+                        <span className="entry-sender">
+                          {entry.sender === 'hospital' ? '🏥 Hospital Staff Notification' : '🗣 You (Patient Voice Message)'}
+                        </span>
+                        <span className="entry-time">{entry.timestamp}</span>
+                      </div>
+                      <p className="entry-transcript">"{entry.transcript}"</p>
                     </div>
                   ))}
                 </div>
               </section>
             )}
-          </div>
+
+            <HospitalMap
+              hospitals={result.hospitals}
+              userLocation={userLocation}
+              caseId={caseId}
+            />
+          </>
         )}
 
       </main>

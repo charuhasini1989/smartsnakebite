@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { key: 'overview',   label: 'Overview',   icon: '📋' },
   { key: 'antivenom',  label: 'Antivenom Inventory', icon: '🧪' },
   { key: 'ambulances', label: 'Ambulances & Tracking', icon: '🚑' },
+  { key: 'alerts',     label: 'Stock Alerts & Import', icon: '🚨' },
   { key: 'resolved',   label: 'Resolved Cases', icon: '✅' },
 ]
 
@@ -25,6 +26,8 @@ export default function HospitalProfile() {
   const [activeCases, setActiveCases] = useState([])
   const [resolvedCases, setResolvedCases] = useState([])
   const [loading, setLoading] = useState(true)
+  const [importNotice, setImportNotice] = useState(null)
+  const [showSmsModal, setShowSmsModal] = useState(false)
 
   const encodedName = encodeURIComponent(hospitalName)
 
@@ -64,11 +67,26 @@ export default function HospitalProfile() {
     }
   }
 
+  const handleRequestImport = (snakeSpecies) => {
+    setImportNotice(`📦 Emergency import request generated for ${snakeSpecies} Antivenom! Dispatching 15 vials from Visakhapatnam Central Medical Depot.`)
+    // Update local state to show restored inventory
+    setAntivenom(prev => prev.map(item => {
+      if (!snakeSpecies || item.snake === snakeSpecies || item.vials === 0) {
+        return { ...item, vials: item.vials + 12 }
+      }
+      return item
+    }))
+  }
+
   const vialLevel = (vials) => {
     if (vials === 0) return { label: 'OUT OF STOCK', cls: 'hp-level-out' }
     if (vials <= 2) return { label: 'LOW STOCK', cls: 'hp-level-low' }
     return { label: 'IN STOCK', cls: 'hp-level-ok' }
   }
+
+  const outOfStockItems = antivenom.filter(a => a.vials === 0 || a.vials <= 2)
+  const phoneClean = overview?.hospital?.phone ? overview.hospital.phone.replace(/[^0-9]/g, '') : '108'
+  const smsBody = encodeURIComponent(`EMERGENCY: Snakebite patient reported. Requesting antivenom intake confirmation at ${hospitalName}.`)
 
   return (
     <div className="hp-page-wrapper">
@@ -96,6 +114,11 @@ export default function HospitalProfile() {
                 <span className="hp-antivenom-badge">
                   {overview?.hospital?.antivenom ? '🧪 Antivenom Equipped' : '⚠️ No Antivenom'}
                 </span>
+                {outOfStockItems.length > 0 && (
+                  <span className="hp-alert-pill" onClick={() => setTab('alerts')}>
+                    🚨 Stock Alert ({outOfStockItems.length} low/depleted)
+                  </span>
+                )}
               </div>
               <h1 className="hp-facility-name">{hospitalName}</h1>
               <p className="hp-facility-address">📍 {overview?.hospital?.address || 'Visakhapatnam Region'}</p>
@@ -103,14 +126,17 @@ export default function HospitalProfile() {
           </div>
 
           <div className="hp-banner-actions">
-            {overview?.hospital?.phone && (
-              <a
-                href={`tel:${overview.hospital.phone.replace(/[^0-9]/g, '')}`}
-                className="hp-call-button"
-              >
-                📞 Call Hospital ({overview.hospital.phone})
-              </a>
-            )}
+            <a href={`tel:${phoneClean}`} className="hp-call-button">
+              📞 Call Hospital ({overview?.hospital?.phone || '108'})
+            </a>
+            <a href={`sms:${phoneClean}?body=${smsBody}`} className="hp-sms-button" onClick={(e) => {
+              if (window.innerWidth > 768) {
+                e.preventDefault()
+                setShowSmsModal(true)
+              }
+            }}>
+              💬 Text / SMS Hospital
+            </a>
           </div>
         </div>
 
@@ -129,6 +155,9 @@ export default function HospitalProfile() {
               )}
               {item.key === 'ambulances' && (
                 <span className="hp-tab-badge teal">{ambulances.length}</span>
+              )}
+              {item.key === 'alerts' && outOfStockItems.length > 0 && (
+                <span className="hp-tab-badge alert">{outOfStockItems.length}</span>
               )}
             </button>
           ))}
@@ -205,9 +234,67 @@ export default function HospitalProfile() {
                         <span className="hp-snake-name">{a.snake}</span>
                         <span className="hp-vial-count">{a.vials} Vials</span>
                         <span className={`hp-level-tag ${level.cls}`}>{level.label}</span>
+                        {a.vials <= 2 && (
+                          <button className="hp-import-mini-btn" onClick={() => handleRequestImport(a.snake)}>
+                            📦 Request Stock Import
+                          </button>
+                        )}
                       </div>
                     )
                   })}
+                </div>
+              </section>
+            )}
+
+            {/* ── Stock Alerts & Import Tab ── */}
+            {tab === 'alerts' && (
+              <section className="hp-card-section">
+                <h3 className="hp-subheading">🚨 Antivenom Stock Depletion Alerts & Import Management</h3>
+                <p className="hp-desc-note">
+                  Automated stock monitoring triggers emergency supply requests when antivenom inventory falls below safe threshold.
+                </p>
+
+                {importNotice && (
+                  <div className="import-success-toast">
+                    {importNotice}
+                  </div>
+                )}
+
+                {outOfStockItems.length === 0 ? (
+                  <div className="stock-all-good-box">
+                    <span className="good-icon">✅</span>
+                    <div>
+                      <strong>All Antivenom Species Stocked</strong>
+                      <p>Inventory levels are above emergency thresholds. No active stock imports required.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="stock-alerts-list">
+                    {outOfStockItems.map((item, idx) => (
+                      <div key={idx} className="alert-item-card">
+                        <div className="aic-left">
+                          <span className="aic-icon">⚠️</span>
+                          <div>
+                            <strong className="aic-species">{item.snake} Antivenom</strong>
+                            <span className="aic-status">
+                              {item.vials === 0 ? 'CRITICAL: OUT OF STOCK (0 Vials)' : `LOW STOCK: ${item.vials} Vials Remaining`}
+                            </span>
+                          </div>
+                        </div>
+                        <button className="aic-import-btn" onClick={() => handleRequestImport(item.snake)}>
+                          📦 Request Emergency Stock Import
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="central-depot-box">
+                  <h4> Visakhapatnam Regional Medical Storage Depot</h4>
+                  <p>Central Reserve: 450 Polyvalent Vials Available · Dispatch Time: ~25 mins</p>
+                  <button className="depot-request-btn" onClick={() => handleRequestImport(null)}>
+                    🚚 Request Full Facility Stock Replenishment (+20 Vials)
+                  </button>
                 </div>
               </section>
             )}
@@ -280,6 +367,48 @@ export default function HospitalProfile() {
         )}
 
       </div>
+
+      {/* ── Text / SMS Modal ── */}
+      {showSmsModal && (
+        <div className="sms-modal-backdrop" onClick={() => setShowSmsModal(false)}>
+          <div className="sms-modal-card" onClick={e => e.stopPropagation()}>
+            <div className="sms-modal-header">
+              <h3>💬 Send Emergency SMS / Text Message</h3>
+              <button className="sms-close-btn" onClick={() => setShowSmsModal(false)}>✕</button>
+            </div>
+            <div className="sms-modal-body">
+              <label>TO HOSPITAL EMERGENCY DESK:</label>
+              <div className="sms-phone-display">📞 {overview?.hospital?.phone || '0891-2727272'}</div>
+
+              <label>EMERGENCY SMS MESSAGE TEMPLATE:</label>
+              <textarea
+                readOnly
+                rows={4}
+                value={`EMERGENCY: Snakebite patient reported. Requesting immediate antivenom intake preparation at ${hospitalName}.`}
+                className="sms-textarea"
+              />
+
+              <div className="sms-actions">
+                <a
+                  href={`sms:${phoneClean}?body=${smsBody}`}
+                  className="sms-send-native-btn"
+                >
+                  💬 Open Messaging App
+                </a>
+                <button
+                  className="sms-copy-btn"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`EMERGENCY: Snakebite patient reported. Requesting antivenom intake preparation at ${hospitalName}.`)
+                    alert('Emergency SMS text copied to clipboard!')
+                  }}
+                >
+                  📋 Copy Text
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

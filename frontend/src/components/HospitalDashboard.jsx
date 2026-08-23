@@ -43,6 +43,7 @@ export default function HospitalDashboard() {
   const [cases, setCases] = useState([])
   const [loading, setLoading] = useState(true)
   const [notified, setNotified] = useState({})
+  const [replyText, setReplyText] = useState({})
   const [filter, setFilter] = useState('ALL')     // ALL | CRITICAL | HIGH | SAFE
   const [sortBy, setSortBy] = useState('newest')  // newest | danger | hospital | distance
   const [viewerLocation, setViewerLocation] = useState(null)
@@ -61,12 +62,27 @@ export default function HospitalDashboard() {
 
   useEffect(() => {
     fetchCases()
-    const interval = setInterval(fetchCases, 10000)
+    const interval = setInterval(fetchCases, 5000)
     return () => clearInterval(interval)
   }, [])
 
   const handleNotify = (id) => {
     setNotified(prev => ({ ...prev, [id]: true }))
+  }
+
+  const handleSendReply = async (caseId, hospitalName) => {
+    const text = replyText[caseId]
+    if (!text || !text.trim()) return
+    try {
+      await axios.post(`/api/cases/${caseId}/hospital-response`, {
+        message: text.trim(),
+        hospital_name: hospitalName || 'Medical Desk'
+      })
+      setReplyText(prev => ({ ...prev, [caseId]: '' }))
+      fetchCases()
+    } catch (err) {
+      console.error('Failed to send hospital response:', err)
+    }
   }
 
   const requestViewerLocation = () => {
@@ -99,84 +115,60 @@ export default function HospitalDashboard() {
       sorted.sort((a, b) => (a.hospital_name || 'zzz').localeCompare(b.hospital_name || 'zzz'))
     } else if (sortBy === 'distance' && viewerLocation) {
       sorted.sort((a, b) => {
-        const da = haversine(viewerLocation.lat, viewerLocation.lng, a.lat, a.lng)
-        const db = haversine(viewerLocation.lat, viewerLocation.lng, b.lat, b.lng)
+        const da = (a.lat && a.lng) ? haversine(viewerLocation.lat, viewerLocation.lng, a.lat, a.lng) : 9999
+        const db = (b.lat && b.lng) ? haversine(viewerLocation.lat, viewerLocation.lng, b.lat, b.lng) : 9999
         return da - db
       })
     }
-    // 'newest' is already the default order from the backend (id DESC)
     return sorted
   }, [cases, filter, sortBy, viewerLocation])
 
-  const criticalCount = cases.filter(c => c.urgency === 'CRITICAL').length
-  const highCount = cases.filter(c => c.urgency === 'HIGH').length
-  const safeCount = cases.filter(c => c.label === 'SAFE').length
-
   return (
-    <div className="hd-app">
+    <div className="hd-page">
+      <header className="hd-header">
+        <div className="hd-header-inner">
+          <div>
+            <span className="hd-badge">LIVE FEED</span>
+            <h1>Hospital Triage Dashboard</h1>
+            <p>Real-time incoming snakebite cases from patients across Visakhapatnam region</p>
+          </div>
 
-      <div className="hd-header-bar">
-        <div className="hd-header-title">
-          <h2>🏥 Live Hospital Dashboard</h2>
-          <p>Real-time snakebite case feed, urgency triage, and treatment protocols</p>
+          <div className="hd-summary-pills">
+            <div className="summary-pill total">
+              <span className="pill-num">{cases.length}</span>
+              <span className="pill-lbl">Total Reports</span>
+            </div>
+            <div className="summary-pill critical">
+              <span className="pill-num">{cases.filter(c => c.urgency === 'CRITICAL' || c.urgency === 'HIGH').length}</span>
+              <span className="pill-lbl">High Urgency</span>
+            </div>
+          </div>
         </div>
-        <div className="hd-topbar-right">
-          <span className="hd-live-dot" />
-          <span className="hd-live-text">Live · auto-refreshes every 10s</span>
-        </div>
-      </div>
+      </header>
 
       <main className="hd-main">
-
-        {/* ── Stats bar (click to filter) ── */}
-        <div className="hd-stats">
-          <div
-            className={`hd-stat hd-stat-clickable ${filter === 'ALL' ? 'active' : ''}`}
-            onClick={() => setFilter('ALL')}
-          >
-            <span className="hd-stat-number">{cases.length}</span>
-            <span className="hd-stat-label">Total Cases</span>
-          </div>
-          <div
-            className={`hd-stat hd-stat-clickable ${filter === 'CRITICAL' ? 'active' : ''}`}
-            onClick={() => setFilter('CRITICAL')}
-          >
-            <span className="hd-stat-number" style={{ color: '#c81e1e' }}>{criticalCount}</span>
-            <span className="hd-stat-label">Critical</span>
-          </div>
-          <div
-            className={`hd-stat hd-stat-clickable ${filter === 'HIGH' ? 'active' : ''}`}
-            onClick={() => setFilter('HIGH')}
-          >
-            <span className="hd-stat-number" style={{ color: '#b45309' }}>{highCount}</span>
-            <span className="hd-stat-label">High</span>
-          </div>
-          <div
-            className={`hd-stat hd-stat-clickable ${filter === 'SAFE' ? 'active' : ''}`}
-            onClick={() => setFilter('SAFE')}
-          >
-            <span className="hd-stat-number" style={{ color: '#057a55' }}>{safeCount}</span>
-            <span className="hd-stat-label">Safe</span>
-          </div>
-        </div>
-
-        {/* ── Sort + filter status bar ── */}
+        {/* ── Toolbar ── */}
         <div className="hd-toolbar">
-          <div className="hd-toolbar-left">
-            {filter !== 'ALL' && (
-              <span className="hd-filter-chip">
-                Showing: {filter}
-                <button onClick={() => setFilter('ALL')}>✕</button>
-              </span>
-            )}
+          <div className="hd-filters">
+            <span className="filter-label">Filter Urgency:</span>
+            {['ALL', 'CRITICAL', 'HIGH', 'SAFE'].map((f) => (
+              <button
+                key={f}
+                className={`hd-filter-btn ${filter === f ? 'active' : ''}`}
+                onClick={() => setFilter(f)}
+              >
+                {f}
+              </button>
+            ))}
           </div>
+
           <label className="hd-sort-label">
-            Sort by
+            Sort by:
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="newest">Newest</option>
-              <option value="danger">Danger</option>
-              <option value="hospital">Hospital Allocated</option>
-              <option value="distance">Nearest to Me</option>
+              <option value="newest">Newest First</option>
+              <option value="danger">Urgency Level</option>
+              <option value="hospital">Allocated Hospital</option>
+              <option value="distance">Distance to Me</option>
             </select>
           </label>
         </div>
@@ -227,7 +219,7 @@ export default function HospitalDashboard() {
 
                   {c.transcript && (
                     <div className="hd-transcript">
-                      <span className="hd-field-label">Reported</span>
+                      <span className="hd-field-label">Reported Speech</span>
                       <p>"{c.transcript}"</p>
                       <span className="hd-lang-tag">{c.language?.toUpperCase()}</span>
                     </div>
@@ -272,10 +264,12 @@ export default function HospitalDashboard() {
 
                   {c.followups && c.followups.length > 0 && (
                     <div className="hd-followups">
-                      <span className="hd-field-label">Patient-Provided Details</span>
+                      <span className="hd-field-label">Case Conversation Feed (Patient & Hospital)</span>
                       {c.followups.map((f, i) => (
-                        <div key={i} className="hd-followup-entry">
-                          <span className="hd-followup-lang">{f.language?.toUpperCase()}</span>
+                        <div key={i} className={`hd-followup-entry ${f.sender === 'hospital' ? 'from-hospital' : 'from-patient'}`}>
+                          <span className="hd-followup-lang">
+                            {f.sender === 'hospital' ? '🏥 HOSPITAL STAFF' : `🗣 PATIENT (${f.language?.toUpperCase()})`}
+                          </span>
                           <p>"{f.transcript}"</p>
                         </div>
                       ))}
@@ -284,10 +278,40 @@ export default function HospitalDashboard() {
 
                   {c.label === 'HARMFUL' && (
                     <div className="hd-protocol">
-                      <span className="hd-field-label">Treatment Protocol</span>
+                      <span className="hd-field-label">Clinical Treatment Protocol</span>
                       <p>{protocol}</p>
                     </div>
                   )}
+
+                  {/* ── Hospital Staff Two-Way Advice Form ── */}
+                  <div className="hd-staff-reply-section">
+                    <span className="hd-field-label">💬 Send Staff Update / Guidance to Patient</span>
+                    <div className="quick-presets">
+                      <button onClick={() => setReplyText(prev => ({ ...prev, [c.id]: "Ambulance team is 5 minutes away. Keep patient still." }))}>
+                        🚑 Ambulance 5m away
+                      </button>
+                      <button onClick={() => setReplyText(prev => ({ ...prev, [c.id]: "ICU bed and 10 antivenom vials prepared at emergency desk." }))}>
+                        🧪 Antivenom Ready
+                      </button>
+                      <button onClick={() => setReplyText(prev => ({ ...prev, [c.id]: "Do not give food or water. Keep limb immobilized." }))}>
+                        ⚠️ Immobilize Limb
+                      </button>
+                    </div>
+                    <div className="reply-input-row">
+                      <input
+                        type="text"
+                        placeholder="Type hospital advice or status update to send to patient..."
+                        value={replyText[c.id] || ''}
+                        onChange={e => setReplyText(prev => ({ ...prev, [c.id]: e.target.value }))}
+                      />
+                      <button
+                        className="send-to-patient-btn"
+                        onClick={() => handleSendReply(c.id, c.hospital_name)}
+                      >
+                        Send Update to Patient
+                      </button>
+                    </div>
+                  </div>
 
                   <div className="hd-case-footer">
                     {notified[c.id] ? (

@@ -574,37 +574,38 @@
 
 .eb-badge {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--alert-deep);
   background: var(--alert-tint);
   border: 1px solid var(--alert-line);
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 5px 12px;
+  border-radius: 6px;
   display: inline-block;
   margin-bottom: 8px;
 }
 
 .eb-title-group h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.85rem;
+  font-weight: 800;
   color: var(--ink);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.4px;
 }
 
 .eb-locate-btn {
   font-family: var(--font-sans);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.92rem;
+  font-weight: 700;
   color: var(--teal-deep);
   background: var(--teal-tint);
-  border: 1px solid var(--teal-line);
-  padding: 9px 18px;
-  border-radius: 20px;
+  border: 1.5px solid var(--teal-line);
+  padding: 10px 20px;
+  border-radius: 24px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .eb-locate-btn:hover:not(:disabled) {
@@ -625,9 +626,9 @@
 
 .eb-box {
   background: var(--paper);
-  border: 1px solid var(--line-strong);
+  border: 1.5px solid var(--line-strong);
   border-radius: var(--radius-md);
-  padding: 20px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -635,7 +636,7 @@
 
 .eb-box-tag {
   font-family: var(--font-mono);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--ink-mute);
@@ -644,8 +645,8 @@
 }
 
 .eb-box h4 {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 1.22rem;
+  font-weight: 800;
   color: var(--ink);
   margin-bottom: 14px;
 }
@@ -653,7 +654,7 @@
 .contact-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .contact-item {
@@ -663,7 +664,7 @@
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: 12px 14px;
 }
 
 .contact-item.primary {
@@ -672,12 +673,13 @@
 }
 
 .contact-icon {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
 }
 
 .contact-item strong {
   display: block;
-  font-size: 0.85rem;
+  font-size: 1.05rem;
+  font-weight: 800;
   color: var(--ink);
 }
 
@@ -686,49 +688,51 @@
 }
 
 .contact-item p {
-  font-size: 0.74rem;
+  font-size: 0.85rem;
   color: var(--ink-soft);
+  font-weight: 500;
 }
 
 .location-info {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .coord-chip {
   display: flex;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--teal-deep);
   background: var(--teal-tint);
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--teal-line);
 }
 
 .loc-status {
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 0.92rem;
+  font-weight: 700;
   color: var(--ink);
 }
 
 .loc-note {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   color: var(--ink-soft);
   line-height: 1.5;
+  font-weight: 500;
 }
 
 .nearest-hospital-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   background: var(--surface);
-  border: 1px solid var(--teal-line);
+  border: 1.5px solid var(--teal-line);
   border-radius: var(--radius-sm);
-  padding: 14px;
+  padding: 16px;
 }
 
 .nh-top {
@@ -739,16 +743,16 @@
 }
 
 .nh-name {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1.18rem;
+  font-weight: 800;
   color: var(--ink);
 }
 
 .nh-stock-badge {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  padding: 3px 7px;
+  padding: 4px 8px;
   border-radius: 4px;
   white-space: nowrap;
 }
@@ -766,16 +770,18 @@
 }
 
 .nh-address {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--ink-soft);
+  font-weight: 500;
 }
 
 .nh-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--ink-mute);
   margin-top: 4px;
 }
@@ -786,8 +792,8 @@
 
 .nh-profile-link {
   text-decoration: none;
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 0.92rem;
+  font-weight: 700;
   color: var(--teal-deep);
   transition: color 0.15s;
 }

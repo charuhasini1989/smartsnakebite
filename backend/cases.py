@@ -57,6 +57,11 @@ def init_db():
         if col not in existing_cols:
             conn.execute(f"ALTER TABLE cases ADD COLUMN {col} {coltype}")
 
+    # Migration for case_followups table
+    existing_followup_cols = {row[1] for row in conn.execute("PRAGMA table_info(case_followups)").fetchall()}
+    if "sender" not in existing_followup_cols:
+        conn.execute("ALTER TABLE case_followups ADD COLUMN sender TEXT DEFAULT 'patient'")
+
     conn.commit()
     conn.close()
 
@@ -92,17 +97,17 @@ def log_case(transcript, label, category, language, lat, lng, message, hospital=
     return case_id
 
 
-def add_followup(case_id: int, transcript: str, language: str = "en"):
+def add_followup(case_id: int, transcript: str, language: str = "en", sender: str = "patient"):
     init_db()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = _connect()
     conn.execute("""
-        INSERT INTO case_followups (case_id, timestamp, transcript, language)
-        VALUES (?, ?, ?, ?)
-    """, (case_id, timestamp, transcript, language))
+        INSERT INTO case_followups (case_id, timestamp, transcript, language, sender)
+        VALUES (?, ?, ?, ?, ?)
+    """, (case_id, timestamp, transcript, language, sender))
     conn.commit()
     conn.close()
-    return {"timestamp": timestamp, "transcript": transcript, "language": language}
+    return {"timestamp": timestamp, "transcript": transcript, "language": language, "sender": sender}
 
 
 def close_case(case_id: int):
@@ -143,10 +148,12 @@ def get_all_cases():
 
     followups_by_case = {}
     for f in followup_rows:
-        followups_by_case.setdefault(f["case_id"], []).append({
-            "timestamp": f["timestamp"],
-            "transcript": f["transcript"],
-            "language": f["language"],
+        f_dict = dict(f)
+        followups_by_case.setdefault(f_dict["case_id"], []).append({
+            "timestamp": f_dict["timestamp"],
+            "transcript": f_dict["transcript"],
+            "language": f_dict["language"],
+            "sender": f_dict.get("sender", "patient"),
         })
 
     for c in cases:

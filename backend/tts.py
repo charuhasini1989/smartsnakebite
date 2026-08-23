@@ -20,7 +20,7 @@ CORRECTIVE_AUDIO = {
 ASK_DETAILS_AUDIO = {
     "en": "Please tell us the patient's name and current location so we can help.",
     "hi": "Kripya hamein mareez ka naam aur unki abhi ki location batayein.",
-    "te": "Dayachesi rogi peru mariyu ippudu unna sthalam cheppandi.",
+    "te": "Dayachesi rogi paeru mariyu ippudu unna sthalam cheppandi.",
 }
 
 _lock = threading.Lock()
@@ -80,4 +80,4 @@ AMBULANCE_DISPATCH_AUDIO = {
 def speak_ambulance_dispatch(hospital_name: str, language: str = "en") -> None:
     lang = language if language in AMBULANCE_DISPATCH_AUDIO else "en"
     template = AMBULANCE_DISPATCH_AUDIO[lang]
-    speak_message(template.format(hospital_name=hospital_name))
+    speak_message(template.format(hospital_name=hospital_name))

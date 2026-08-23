@@ -571,6 +571,311 @@
   border-radius: var(--radius-md);
 }
 
+.hp-sms-button {
+  text-decoration: none;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #1e293b;
+  border: 1px solid #0f172a;
+  padding: 10px 20px;
+  border-radius: 24px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+  transition: all 0.15s ease;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.hp-sms-button:hover {
+  background: #0f172a;
+  transform: translateY(-1px);
+}
+
+.hp-alert-pill {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--alert-deep);
+  background: var(--alert-tint);
+  border: 1px solid var(--alert-line);
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.hp-tab-badge.alert {
+  background: var(--alert-tint);
+  color: var(--alert-deep);
+}
+
+/* ── Stock Alerts & Import Tab ── */
+.import-success-toast {
+  background: var(--teal-tint);
+  border: 1.5px solid var(--teal-line);
+  color: var(--teal-deep);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.stock-all-good-box {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--teal-tint);
+  border: 1.5px solid var(--teal-line);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.stock-all-good-box .good-icon {
+  font-size: 2rem;
+}
+
+.stock-alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.alert-item-card {
+  background: var(--paper);
+  border: 1.5px solid var(--alert-line);
+  border-radius: var(--radius-md);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.aic-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.aic-icon {
+  font-size: 1.6rem;
+}
+
+.aic-species {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.aic-status {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--alert-deep);
+}
+
+.aic-import-btn {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--teal);
+  border: none;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(13, 125, 106, 0.25);
+  transition: all 0.15s ease;
+}
+
+.aic-import-btn:hover {
+  background: var(--teal-deep);
+  transform: translateY(-1px);
+}
+
+.central-depot-box {
+  background: var(--paper);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.central-depot-box h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.central-depot-box p {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.depot-request-btn {
+  align-self: flex-start;
+  margin-top: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #1e293b;
+  border: none;
+  padding: 11px 20px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.depot-request-btn:hover {
+  background: #0f172a;
+}
+
+.hp-import-mini-btn {
+  margin-top: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--teal-deep);
+  background: var(--teal-tint);
+  border: 1px solid var(--teal-line);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.hp-import-mini-btn:hover {
+  background: var(--teal);
+  color: #fff;
+}
+
+/* ── SMS Modal ── */
+.sms-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.sms-modal-card {
+  background: var(--surface);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  max-width: 520px;
+  width: 100%;
+  padding: 28px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: slide-up 0.2s ease-out;
+}
+
+.sms-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+
+.sms-modal-header h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.sms-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--ink-mute);
+}
+
+.sms-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sms-modal-body label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-mute);
+}
+
+.sms-phone-display {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--teal-deep);
+  background: var(--teal-tint);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--teal-line);
+}
+
+.sms-textarea {
+  width: 100%;
+  padding: 12px;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  outline: none;
+  resize: none;
+}
+
+.sms-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.sms-send-native-btn {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--teal);
+  padding: 11px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(13, 125, 106, 0.25);
+}
+
+.sms-copy-btn {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  padding: 11px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
 @media (max-width: 768px) {
   .hp-profile-banner {
     padding: 20px;
